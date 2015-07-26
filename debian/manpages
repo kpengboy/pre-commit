@@ -1,0 +1,3 @@
+debian/pre-commit.man
+debian/pre-commit-validate-manifest.man
+debian/pre-commit-validate-config.man

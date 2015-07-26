@@ -1,0 +1,7 @@
+[authors]
+.B pre-commit
+was primarily written by Anthony Sottile and Ken Struys.
+[see also]
+Documentation for
+.B pre-commit
+is available online at http://pre-commit.com/
