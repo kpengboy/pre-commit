@@ -1,0 +1,32 @@
+Source: pre-commit
+Section: utils
+Priority: extra
+Maintainer: Chris Kuehl <ckuehl@ocf.berkeley.edu>
+Build-Depends: debhelper (>= 9),
+               dh-python,
+               python3-all,
+               python3-pkg-resources,
+               python3-pkginfo,
+               python3-setuptools
+Standards-Version: 3.9.6
+Vcs-Git: https://github.com/chriskuehl/pre-commit.git
+Vcs-Browser: https://github.com/chriskuehl/pre-commit
+Homepage: http://pre-commit.com/
+
+Package: pre-commit
+Architecture: all
+Depends: ${misc:Depends}, ${python3:Depends}, git
+Description: multi-language package manager for git pre-commit hooks
+ pre-commit manages installation and execution of pre-commit hooks in the git
+ version control system.
+ .
+ Projects can create a `.pre-commit-config.yaml` file in their repository's
+ root directory which specifies a list of linters, test runners, and other code
+ health checks to be run before each commit.
+ .
+ Hooks written in JavaScript (node), Python, and Ruby are supported, plus
+ arbitrary executables or shell scripts.
+ .
+ pre-commit handles installing the exact version of each runtime requested for
+ each hook, so that you can easily use the best industry standard linters, even
+ if they are written in a language different from your project's.

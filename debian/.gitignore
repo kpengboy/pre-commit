@@ -1,0 +1,5 @@
+/*.log
+/files
+/pre-commit/
+/*.debhelper
+/*.substvars

@@ -1,0 +1,21 @@
+Author: Chris Kuehl <ckuehl@ocf.berkeley.edu>
+Subject: Remove Python 2 dependencies
+Forwarded: not-needed
+Description: Remove upstream declared dependencies which only apply to Python
+ 2.6. Since we build exclusively for Python 3, we don't need these.
+
+--- a/setup.py
++++ b/setup.py
+@@ -38,12 +38,10 @@
+         ]
+     },
+     install_requires=[
+-        'argparse',
+         'aspy.yaml',
+         'cached-property',
+         'jsonschema',
+         'nodeenv>=0.11.1',
+-        'ordereddict',
+         'pyyaml',
+         'simplejson',
+         'virtualenv',

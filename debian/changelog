@@ -1,0 +1,5 @@
+pre-commit (0.5.4-1) unstable; urgency=medium
+
+  * Initial release. (Closes: #793655)
+
+ -- Chris Kuehl <ckuehl@ocf.berkeley.edu>  Fri, 03 Jul 2015 23:27:33 -0700

@@ -1,0 +1,1 @@
+tar-ignore = pre_commit/resources/*.tar.gz
