@@ -1,3 +1,12 @@
+Author: Chris Kuehl <ckuehl@ocf.berkeley.edu>
+Subject: Unvendor rbenv
+Forwarded: not-needed
+Description: Upstream includes rbenv tarballs into their source which are
+ distributed with the package so that users needn't install rbenv manually.
+ .
+ We just add `Depends: nodeenv` and strip the tarballs to comply with Policy
+ (``4.13 Convenience copies of code'').
+
 --- a/pre_commit/languages/ruby.py
 +++ b/pre_commit/languages/ruby.py
 @@ -2,6 +2,7 @@

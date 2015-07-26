@@ -1,3 +1,10 @@
+Author: Chris Kuehl <ckuehl@ocf.berkeley.edu>
+Subject: Add --version option to validator scripts
+Forwarded: https://github.com/pre-commit/pre-commit/pull/250
+Applied-Upstream: > 0.5.4, https://github.com/pre-commit/pre-commit/commit/ff5e6e5e8
+Description: Add `--version' option to validator binaries so that we can
+ generate manpages for them using help2man.
+
 --- a/pre_commit/clientlib/validate_base.py
 +++ b/pre_commit/clientlib/validate_base.py
 @@ -3,6 +3,7 @@

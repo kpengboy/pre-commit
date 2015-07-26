@@ -1,3 +1,10 @@
+Author: Chris Kuehl <ckuehl@ocf.berkeley.edu>
+Subject: Rename validator scripts
+Forwarded: https://github.com/pre-commit/pre-commit/pull/251
+Applied-Upstream: > 0.5.4, https://github.com/pre-commit/pre-commit/commit/b07572e32
+Description: Rename validator scripts to be less generic and more suitable for
+ inclusion into Debian.
+
 diff --git a/setup.py b/setup.py
 index c75a891..3c90049 100644
 --- a/setup.py
