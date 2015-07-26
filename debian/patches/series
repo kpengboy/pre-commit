@@ -1,1 +1,4 @@
 remove_py2_deps.patch
+unvendor_rbenv.patch
+rename_validators.patch
+add_version_to_validators.patch

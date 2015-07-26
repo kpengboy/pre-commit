@@ -15,7 +15,7 @@ Homepage: http://pre-commit.com/
 
 Package: pre-commit
 Architecture: all
-Depends: ${misc:Depends}, ${python3:Depends}, git
+Depends: ${misc:Depends}, ${python3:Depends}, git, rbenv
 Description: multi-language package manager for git pre-commit hooks
  pre-commit manages installation and execution of pre-commit hooks in the git
  version control system.
