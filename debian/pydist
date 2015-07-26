@@ -1,2 +1,3 @@
 cached_property python3-cached-property
 aspy.yaml python3-aspy.yaml
+nodeenv nodeenv
