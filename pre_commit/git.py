@@ -10,6 +10,11 @@ from pre_commit.errors import FatalError
 from pre_commit.util import cmd_output
 from pre_commit.util import memoize_by_cwd
 
+GIT_MODE_FILE = 0o100644
+GIT_MODE_EXECUTABLE = 0o100755
+GIT_MODE_SYMLINK = 0o120000
+GIT_MODE_SUBMODULE = 0o160000
+
 
 logger = logging.getLogger('pre_commit')
 
