@@ -432,6 +432,7 @@ def test_local_hook_for_stages(
             ('entry', 'python -m pylint.__main__'),
             ('language', 'system'),
             ('files', r'\.py$'),
+            ('types', ['file']),
             ('stages', stage_for_first_hook)
         )), OrderedDict((
             ('id', 'do_not_commit'),
@@ -439,6 +440,7 @@ def test_local_hook_for_stages(
             ('entry', 'DO NOT COMMIT'),
             ('language', 'pcre'),
             ('files', '^(.*)$'),
+            ('types', ['file']),
             ('stages', stage_for_second_hook)
         ))))
     ))
@@ -468,12 +470,14 @@ def test_local_hook_passes(
             ('entry', 'python -m pylint.__main__'),
             ('language', 'system'),
             ('files', r'\.py$'),
+            ('types', ['file']),
         )), OrderedDict((
             ('id', 'do_not_commit'),
             ('name', 'Block if "DO NOT COMMIT" is found'),
             ('entry', 'DO NOT COMMIT'),
             ('language', 'pcre'),
             ('files', '^(.*)$'),
+            ('types', ['file']),
         ))))
     ))
     add_config_to_repo(repo_with_passing_hook, config)
@@ -502,6 +506,7 @@ def test_local_hook_fails(
             ('entry', 'sh -c "! grep -iI todo $@" --'),
             ('language', 'system'),
             ('files', ''),
+            ('types', ['file']),
         ))])
     ))
     add_config_to_repo(repo_with_passing_hook, config)

@@ -31,15 +31,21 @@ MANIFEST_JSON_SCHEMA = {
                     'type': 'string',
                 },
             },
+            'types': {
+                'type': 'array',
+                'items': {'type': 'string'},
+            },
             'args': {
                 'type': 'array',
                 'default': [],
-                'items': {
-                    'type': 'string',
-                },
+                'items': {'type': 'string'},
             },
         },
-        'required': ['id', 'name', 'entry', 'language', 'files'],
+        'anyOf': [
+            {'required': ['files']},
+            {'required': ['types']},
+        ],
+        'required': ['id', 'name', 'entry', 'language'],
     },
 }
 
@@ -74,6 +80,13 @@ def validate_files(hook_config):
 def additional_manifest_check(obj):
     for hook_config in obj:
         validate_languages(hook_config)
+
+        if 'files' not in hook_config:
+            hook_config['files'] = ''  # empty regex to match all files
+
+        if 'types' not in hook_config:
+            hook_config['types'] = ['file']
+
         validate_files(hook_config)
 
 
