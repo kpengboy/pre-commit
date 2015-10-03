@@ -4,4 +4,10 @@ KNOWN_EXTENSIONS = [
     ('^py$', ['python']),
     ('^rb$', ['ruby']),
     ('^sh$', ['shell']),
+    ('^e?ya?ml$', ['yaml']),
+    ('^pp$', ['puppet']),
+    ('^erb$', ['erb']),
+    ('^json$', ['json']),
+    ('^xml$', ['xml']),
+    ('^c$', ['c']),
 ]
