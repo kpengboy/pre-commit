@@ -1,3 +1,18 @@
+pre-commit (0.6.5-1ocf1) unstable; urgency=medium
+
+  * New upstream version.
+  * New version of hooks-by-type experimental patches.
+
+ -- Chris Kuehl <ckuehl@yelp.com>  Sat, 21 Nov 2015 03:34:10 -0500
+
+pre-commit (0.6.2-1ocf2) unstable; urgency=medium
+
+  * New upstream version.
+  * Add hooks-by-type experimental patches.
+  * Drop unnecessary patches.
+
+ -- Chris Kuehl <ckuehl@ocf.berkeley.edu>  Thu, 15 Oct 2015 20:15:32 -0400
+
 pre-commit (0.5.4-1) unstable; urgency=medium
 
   * Initial release. (Closes: #793655)
