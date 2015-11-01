@@ -62,11 +62,11 @@ def get_filenames(args, include_expr, exclude_expr, types):
             lambda: get_changed_files(args.origin, args.source),
         )
     elif args.files:
-        lst = [
+        files = [
             (path, git.guess_git_type_for_file(path))
             for path in args.files
         ]
-        getter = git.get_files_matching(lambda: lst)
+        getter = git.get_files_matching(lambda: files)
     elif args.all_files:
         getter = git.get_all_files_matching
     elif git.is_in_merge_conflict():
@@ -81,7 +81,7 @@ def _run_single_hook(hook, repo, args, write, skips=frozenset()):
         args,
         hook['files'],
         hook['exclude'],
-        frozenset(hook['types']),
+        frozenset(hook['types']) if 'types' in hook else frozenset(['file']),
     )
     if hook['id'] in skips:
         _print_user_skipped(hook, write, args)
