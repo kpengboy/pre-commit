@@ -3,16 +3,16 @@ from setuptools import setup
 
 
 setup(
-    name='pre_commit',
+    name='ckuehl_pre_commit_types',
     description=(
         'A framework for managing and maintaining multi-language pre-commit '
         'hooks.'
     ),
     url='https://github.com/pre-commit/pre-commit',
-    version='0.6.5',
+    version='0.6.5.dev1',
 
-    author='Anthony Sottile',
-    author_email='asottile@umich.edu',
+    author='Chris Kuehl (testing fork), Anthony Sottile',
+    author_email='ckuehl@yelp.com',
 
     platforms='linux',
     classifiers=[

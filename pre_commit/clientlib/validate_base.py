@@ -76,7 +76,7 @@ def get_run_function(filenames_help, validate_strategy, exception_cls):
             '-V', '--version',
             action='version',
             version='%(prog)s {0}'.format(
-                pkg_resources.get_distribution('pre-commit').version
+                pkg_resources.get_distribution('ckuehl-pre-commit-types').version  # noqa
             )
         )
 
