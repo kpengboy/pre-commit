@@ -36,7 +36,7 @@ def main(argv=None):
         '-V', '--version',
         action='version',
         version='%(prog)s {0}'.format(
-            pkg_resources.get_distribution('pre-commit').version
+            pkg_resources.get_distribution('ckuehl-pre-commit-types').version
         )
     )
 

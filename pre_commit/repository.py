@@ -25,7 +25,7 @@ from pre_commit.prefixed_command_runner import PrefixedCommandRunner
 logger = logging.getLogger('pre_commit')
 
 _pre_commit_version = pkg_resources.parse_version(
-    pkg_resources.get_distribution('pre-commit').version
+    pkg_resources.get_distribution('ckuehl-pre-commit-types').version
 )
 
 # Bump when installation changes in a backwards / forwards incompatible way

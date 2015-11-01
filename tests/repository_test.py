@@ -559,9 +559,10 @@ def test_too_new_version(tempdir_factory, store, fake_log_handler):
     with pytest.raises(SystemExit):
         repo.install()
     msg = fake_log_handler.handle.call_args[0][0].msg
+    print(msg)
     assert re.match(
         r'^The hook `bash_hook` requires pre-commit version 999\.0\.0 but '
-        r'version \d+\.\d+\.\d+ is installed.  '
+        r'version \d+\.\d+\.\d+(\.dev\d+)? is installed.  '
         r'Perhaps run `pip install --upgrade pre-commit`\.$',
         msg,
     )
@@ -569,7 +570,7 @@ def test_too_new_version(tempdir_factory, store, fake_log_handler):
 
 @pytest.mark.parametrize(
     'version',
-    ('0.1.0', pkg_resources.get_distribution('pre-commit').version),
+    ('0.1.0', pkg_resources.get_distribution('ckuehl-pre-commit-types').version),  # noqa
 )
 def test_versions_ok(tempdir_factory, store, version):
     path = make_repo(tempdir_factory, 'script_hooks_repo')
