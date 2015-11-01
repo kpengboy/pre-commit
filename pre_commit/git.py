@@ -106,10 +106,16 @@ def guess_git_type_for_file(path):
 
 @memoize_by_cwd
 def get_staged_files():
+    """Return a list of paths in the repo which have been added/modified."""
     return [
         (path, get_git_type_for_file(path))
         for path
-        in cmd_output('git', 'diff', '--staged', '--name-only')[1].splitlines()
+        in cmd_output(
+            'git', 'diff',
+            '--diff-filter=ACMRTUXB',  # all types except D ("Deleted")
+            '--staged',
+            '--name-only',
+        )[1].splitlines()
     ]
 
 
@@ -119,7 +125,7 @@ _split_git_ls_line = re.compile('^([0-7]{6}) [0-9a-f]{40} [0-9]+\t(.+)$')
 
 
 def _parse_git_ls_line(line):
-    """Split a line of ls-files into a tuple (path, mode)."""
+    """Split a line of `git ls-files` into a tuple (path, type)."""
     match = _split_git_ls_line.match(line)
     return match.group(2), int(match.group(1), 8)
 

@@ -10,10 +10,10 @@ from pre_commit import color
 from pre_commit import five
 from pre_commit.commands.autoupdate import autoupdate
 from pre_commit.commands.clean import clean
+from pre_commit.commands.identify import identify
 from pre_commit.commands.install_uninstall import install
 from pre_commit.commands.install_uninstall import uninstall
 from pre_commit.commands.run import run
-from pre_commit.commands.identify import identify
 from pre_commit.error_handler import error_handler
 from pre_commit.runner import Runner
 

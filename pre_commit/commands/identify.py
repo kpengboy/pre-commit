@@ -1,5 +1,6 @@
-from pre_commit.file_classifier.classifier import classify
 from pre_commit import git
+from pre_commit.file_classifier.classifier import classify
+
 
 def identify(args):
     path = args.path
