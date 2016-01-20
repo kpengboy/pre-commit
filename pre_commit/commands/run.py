@@ -1,3 +1,4 @@
+# -*- coding: utf-8 -*-
 from __future__ import print_function
 from __future__ import unicode_literals
 
@@ -55,28 +56,41 @@ def get_changed_files(new, old):
     )[1].splitlines()
 
 
-def get_filenames(args, include_expr, exclude_expr):
+def get_filenames(args, include_expr, exclude_expr, types):
+    """Return a list of file names and modes to consider for this run.
+
+    :return: a list of tuples of the of the form (path, mode).
+    """
     if args.origin and args.source:
         getter = git.get_files_matching(
             lambda: get_changed_files(args.origin, args.source),
         )
     elif args.files:
-        getter = git.get_files_matching(lambda: args.files)
+        files = [
+            (path, git.guess_git_type_for_file(path))
+            for path in args.files
+        ]
+        getter = git.get_files_matching(lambda: files)
     elif args.all_files:
         getter = git.get_all_files_matching
     elif git.is_in_merge_conflict():
         getter = git.get_conflicted_files_matching
     else:
         getter = git.get_staged_files_matching
-    return getter(include_expr, exclude_expr)
+    return getter(include_expr, exclude_expr, types)
 
 
 def _run_single_hook(hook, repo, args, write, skips=frozenset()):
-    filenames = get_filenames(args, hook['files'], hook['exclude'])
+    filenames = get_filenames(
+        args,
+        hook['files'],
+        hook['exclude'],
+        frozenset(hook['types']),
+    )
     if hook['id'] in skips:
         _print_user_skipped(hook, write, args)
         return 0
-    elif not filenames:
+    elif not filenames and not hook['always_run']:
         _print_no_files_skipped(hook, write, args)
         return 0
 
@@ -85,9 +99,17 @@ def _run_single_hook(hook, repo, args, write, skips=frozenset()):
     write(get_hook_message(_hook_msg_start(hook, args.verbose), end_len=6))
     sys.stdout.flush()
 
+    diff_before = cmd_output('git', 'diff', retcode=None, encoding=None)
     retcode, stdout, stderr = repo.run_hook(hook, filenames)
+    diff_after = cmd_output('git', 'diff', retcode=None, encoding=None)
 
-    if retcode != hook['expected_return_value']:
+    file_modifications = diff_before != diff_after
+
+    # If the hook makes changes, fail the commit
+    if file_modifications:
+        retcode = 1
+
+    if retcode:
         retcode = 1
         print_color = color.RED
         pass_fail = 'Failed'
@@ -98,9 +120,19 @@ def _run_single_hook(hook, repo, args, write, skips=frozenset()):
 
     write(color.format_color(pass_fail, print_color, args.color) + '\n')
 
-    if (stdout or stderr) and (retcode or args.verbose):
+    if (stdout or stderr or file_modifications) and (retcode or args.verbose):
         write('hookid: {0}\n'.format(hook['id']))
         write('\n')
+
+        # Print a message if failing due to file modifications
+        if file_modifications:
+            write('Files were modified by this hook.')
+
+            if stdout or stderr:
+                write(' Additional output:\n')
+
+            write('\n')
+
         for output in (stdout, stderr):
             assert type(output) is bytes, type(output)
             if output.strip():
@@ -175,6 +207,7 @@ def run(runner, args, write=sys_stdout_write_wrapper, environ=os.environ):
 
     with ctx:
         repo_hooks = list(get_repo_hooks(runner))
+
         if args.hook:
             repo_hooks = [
                 (repo, hook) for repo, hook in repo_hooks
@@ -183,4 +216,11 @@ def run(runner, args, write=sys_stdout_write_wrapper, environ=os.environ):
             if not repo_hooks:
                 write('No hook with id `{0}`\n'.format(args.hook))
                 return 1
+
+        # Filter hooks for stages
+        repo_hooks = [
+            (repo, hook) for repo, hook in repo_hooks
+            if not hook['stages'] or args.hook_stage in hook['stages']
+        ]
+
         return _run_hooks(repo_hooks, args, write, environ)

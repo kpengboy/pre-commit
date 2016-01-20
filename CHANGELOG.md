@@ -1,3 +1,85 @@
+0.7.6
+=====
+- Work under latest virtualenv
+- No longer create empty directories on windows with latest virtualenv
+
+0.7.5
+=====
+- Consider dead symlinks as files when committing
+
+0.7.4
+=====
+- Produce error message instead of crashing on non-utf8 installation failure
+
+0.7.3
+=====
+- Fix regression introduced in 0.7.1 breaking `git commit -a`
+
+0.7.2
+=====
+- Add `always_run` setting for hooks to run even without file changes.
+
+0.7.1
+=====
+- Support running pre-commit inside submodules
+
+0.7.0
+=====
+- Store state about additional_dependencies for rollforward/rollback compatibility
+
+0.6.8
+=====
+- Build as a universal wheel
+- Allow '.format('-like strings in arguments
+- Add an option to require a minimum pre-commit version
+
+0.6.7
+=====
+- Print a useful message when a hook id is not present
+- Fix printing of non-ascii with unexpected errors
+- Print a message when a hook modifies files but produces no output
+
+0.6.6
+=====
+- Add `additional_dependencies` to hook configuration.
+- Fix pre-commit cloning under git 2.6
+- Small improvements for windows
+
+0.6.5
+=====
+- Allow args for pcre hooks
+
+0.6.4
+=====
+- Fix regression introduced in 0.6.3 regarding hooks which make non-utf8 diffs
+
+0.6.3
+=====
+- Remove `expected_return_code`
+- Fail a hook if it makes modifications to the working directory
+
+0.6.2
+=====
+- Use --no-ri --no-rdoc instead of --no-document for gem to fix old gem
+
+0.6.1
+=====
+- Fix pre-push when pushing something that's already up to date
+
+0.6.0
+=====
+- Filter hooks by stage (commit, push).
+
+0.5.5
+=====
+- Change permissions a few files
+- Rename the validate entrypoints
+- Add --version to some entrypoints
+- Add --no-document to gem installations
+- Use expanduser when finding the python binary
+- Suppress complaint about $TERM when no tty is attached
+- Support pcre hooks on osx through ggrep
+
 0.5.4
 =====
 - Allow hooks to produce outputs with arbitrary bytes

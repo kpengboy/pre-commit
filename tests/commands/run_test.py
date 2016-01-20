@@ -1,4 +1,4 @@
-# -*- coding: UTF-8 -*-
+# -*- coding: utf-8 -*-
 from __future__ import unicode_literals
 
 import functools
@@ -11,6 +11,7 @@ import sys
 import mock
 import pytest
 
+import pre_commit.constants as C
 from pre_commit.commands.install_uninstall import install
 from pre_commit.commands.run import _get_skips
 from pre_commit.commands.run import _has_unmerged_paths
@@ -24,25 +25,26 @@ from pre_commit.util import cwd
 from testing.auto_namedtuple import auto_namedtuple
 from testing.fixtures import add_config_to_repo
 from testing.fixtures import make_consuming_repo
+from testing.fixtures import modify_config
 
 
 @pytest.yield_fixture
-def repo_with_passing_hook(tmpdir_factory):
-    git_path = make_consuming_repo(tmpdir_factory, 'script_hooks_repo')
+def repo_with_passing_hook(tempdir_factory):
+    git_path = make_consuming_repo(tempdir_factory, 'script_hooks_repo')
     with cwd(git_path):
         yield git_path
 
 
 @pytest.yield_fixture
-def repo_with_failing_hook(tmpdir_factory):
-    git_path = make_consuming_repo(tmpdir_factory, 'failing_hook_repo')
+def repo_with_failing_hook(tempdir_factory):
+    git_path = make_consuming_repo(tempdir_factory, 'failing_hook_repo')
     with cwd(git_path):
         yield git_path
 
 
-def stage_a_file():
-    cmd_output('touch', 'foo.py')
-    cmd_output('git', 'add', 'foo.py')
+def stage_a_file(filename='foo.py'):
+    cmd_output('touch', filename)
+    cmd_output('git', 'add', filename)
 
 
 def get_write_mock_output(write_mock):
@@ -59,6 +61,7 @@ def _get_opts(
         origin='',
         source='',
         allow_unstaged_config=False,
+        hook_stage='commit'
 ):
     # These are mutually exclusive
     assert not (all_files and files)
@@ -68,6 +71,7 @@ def _get_opts(
         color=color,
         verbose=verbose,
         hook=hook,
+        hook_stage=hook_stage,
         no_stash=no_stash,
         origin=origin,
         source=source,
@@ -89,6 +93,7 @@ def _test_run(repo, options, expected_outputs, expected_ret, stage):
         stage_a_file()
     args = _get_opts(**options)
     ret, printed = _do_run(repo, args)
+
     assert ret == expected_ret, (ret, expected_ret, printed)
     for expected_output_part in expected_outputs:
         assert expected_output_part in printed
@@ -111,10 +116,39 @@ def test_run_all_hooks_failing(
     )
 
 
-def test_arbitrary_bytes_hook(tmpdir_factory, mock_out_store_directory):
-    git_path = make_consuming_repo(tmpdir_factory, 'arbitrary_bytes_repo')
+def test_arbitrary_bytes_hook(tempdir_factory, mock_out_store_directory):
+    git_path = make_consuming_repo(tempdir_factory, 'arbitrary_bytes_repo')
     with cwd(git_path):
         _test_run(git_path, {}, (b'\xe2\x98\x83\xb2\n',), 1, True)
+
+
+def test_hook_that_modifies_but_returns_zero(
+        tempdir_factory, mock_out_store_directory,
+):
+    git_path = make_consuming_repo(
+        tempdir_factory, 'modified_file_returns_zero_repo',
+    )
+    with cwd(git_path):
+        stage_a_file('bar.py')
+        _test_run(
+            git_path,
+            {},
+            (
+                # The first should fail
+                b'Failed',
+                # With a modified file (default message + the hook's output)
+                b'Files were modified by this hook. Additional output:\n\n'
+                b'Modified: foo.py',
+                # The next hook should pass despite the first modifying
+                b'Passed',
+                # The next hook should fail
+                b'Failed',
+                # bar.py was modified, but provides no additional output
+                b'Files were modified by this hook.\n',
+            ),
+            1,
+            True,
+        )
 
 
 @pytest.mark.parametrize(
@@ -148,6 +182,12 @@ def test_run(
         mock_out_store_directory,
 ):
     _test_run(repo_with_passing_hook, options, outputs, expected_ret, stage)
+
+
+def test_always_run(repo_with_passing_hook, mock_out_store_directory):
+    with modify_config() as config:
+        config[0]['hooks'][0]['always_run'] = True
+    _test_run(repo_with_passing_hook, {}, (b'Bash hook', b'Passed'), 0, False)
 
 
 @pytest.mark.parametrize(
@@ -281,9 +321,8 @@ def test_multiple_hooks_same_id(
 ):
     with cwd(repo_with_passing_hook):
         # Add bash hook on there again
-        with io.open('.pre-commit-config.yaml', 'a+') as config_file:
-            config_file.write('    - id: bash_hook\n')
-        cmd_output('git', 'add', '.pre-commit-config.yaml')
+        with modify_config() as config:
+            config[0]['hooks'].append({'id': 'bash_hook'})
         stage_a_file()
 
     ret, output = _do_run(repo_with_passing_hook, _get_opts())
@@ -292,12 +331,12 @@ def test_multiple_hooks_same_id(
 
 
 def test_non_ascii_hook_id(
-        repo_with_passing_hook, mock_out_store_directory, tmpdir_factory,
+        repo_with_passing_hook, mock_out_store_directory, tempdir_factory,
 ):
     with cwd(repo_with_passing_hook):
         install(Runner(repo_with_passing_hook))
         # Don't want to write to home directory
-        env = dict(os.environ, PRE_COMMIT_HOME=tmpdir_factory.get())
+        env = dict(os.environ, PRE_COMMIT_HOME=tempdir_factory.get())
         _, stdout, _ = cmd_output(
             sys.executable, '-m', 'pre_commit.main', 'run', '☃',
             env=env, retcode=None,
@@ -308,21 +347,17 @@ def test_non_ascii_hook_id(
 
 
 def test_stdout_write_bug_py26(
-        repo_with_failing_hook, mock_out_store_directory, tmpdir_factory,
+        repo_with_failing_hook, mock_out_store_directory, tempdir_factory,
 ):
     with cwd(repo_with_failing_hook):
-        # Add bash hook on there again
-        with io.open(
-            '.pre-commit-config.yaml', 'a+', encoding='UTF-8',
-        ) as config_file:
-            config_file.write('        args: ["☃"]\n')
-        cmd_output('git', 'add', '.pre-commit-config.yaml')
+        with modify_config() as config:
+            config[0]['hooks'][0]['args'] = ['☃']
         stage_a_file()
 
         install(Runner(repo_with_failing_hook))
 
         # Don't want to write to home directory
-        env = dict(os.environ, PRE_COMMIT_HOME=tmpdir_factory.get())
+        env = dict(os.environ, PRE_COMMIT_HOME=tempdir_factory.get())
         # Have to use subprocess because pytest monkeypatches sys.stdout
         _, stdout, _ = cmd_output(
             'git', 'commit', '-m', 'Commit!',
@@ -336,6 +371,33 @@ def test_stdout_write_bug_py26(
         assert 'UnicodeDecodeError' not in stdout
 
 
+def test_hook_install_failure(mock_out_store_directory, tempdir_factory):
+    git_path = make_consuming_repo(tempdir_factory, 'not_installable_repo')
+    with cwd(git_path):
+        install(Runner(git_path))
+
+        # Don't want to write to home directory
+        env = dict(os.environ, PRE_COMMIT_HOME=tempdir_factory.get())
+        _, stdout, _ = cmd_output(
+            'git', 'commit', '-m', 'Commit!',
+            # git commit puts pre-commit to stderr
+            stderr=subprocess.STDOUT,
+            env=env,
+            retcode=None,
+            encoding=None,
+        )
+        assert b'UnicodeDecodeError' not in stdout
+        # Doesn't actually happen, but a reasonable assertion
+        assert b'UnicodeEncodeError' not in stdout
+
+        # Sanity check our output
+        assert (
+            b'An unexpected error has occurred: CalledProcessError: ' in
+            stdout
+        )
+        assert '☃'.encode('UTF-8') + '²'.encode('latin1') in stdout
+
+
 def test_get_changed_files():
     files = get_changed_files(
         '78c682a1d13ba20e7cb735313b9314a74365cd3a',
@@ -344,14 +406,14 @@ def test_get_changed_files():
     assert files == ['CHANGELOG.md', 'setup.py']
 
 
-def test_lots_of_files(mock_out_store_directory, tmpdir_factory):
+def test_lots_of_files(mock_out_store_directory, tempdir_factory):
     # windows xargs seems to have a bug, here's a regression test for
     # our workaround
-    git_path = make_consuming_repo(tmpdir_factory, 'python_hooks_repo')
+    git_path = make_consuming_repo(tempdir_factory, 'python_hooks_repo')
     with cwd(git_path):
         # Override files so we run against them
-        with io.open('.pre-commit-config.yaml', 'a+') as config_file:
-            config_file.write('        files: ""\n')
+        with modify_config() as config:
+            config[0]['hooks'][0]['files'] = ''
 
         # Write a crap ton of files
         for i in range(400):
@@ -362,7 +424,7 @@ def test_lots_of_files(mock_out_store_directory, tmpdir_factory):
         install(Runner(git_path))
 
         # Don't want to write to home directory
-        env = dict(os.environ, PRE_COMMIT_HOME=tmpdir_factory.get())
+        env = dict(os.environ, PRE_COMMIT_HOME=tempdir_factory.get())
         cmd_output(
             'git', 'commit', '-m', 'Commit!',
             # git commit puts pre-commit to stderr
@@ -371,9 +433,67 @@ def test_lots_of_files(mock_out_store_directory, tmpdir_factory):
         )
 
 
-def test_local_hook_passes(
+@pytest.mark.parametrize(
+    ('hook_stage', 'stage_for_first_hook', 'stage_for_second_hook',
+     'expected_output'),
+    (
+        ('push', ['commit'], ['commit'], [b'', b'']),
+        ('push', ['commit', 'push'], ['commit', 'push'],
+         [b'hook 1', b'hook 2']),
+        ('push', [], [], [b'hook 1', b'hook 2']),
+        ('push', [], ['commit'], [b'hook 1', b'']),
+        ('push', ['push'], ['commit'], [b'hook 1', b'']),
+        ('push', ['commit'], ['push'], [b'', b'hook 2']),
+        ('commit', ['commit', 'push'], ['commit', 'push'],
+         [b'hook 1', b'hook 2']),
+        ('commit', ['commit'], ['commit'], [b'hook 1', b'hook 2']),
+        ('commit', [], [], [b'hook 1', b'hook 2']),
+        ('commit', [], ['commit'], [b'hook 1', b'hook 2']),
+        ('commit', ['push'], ['commit'], [b'', b'hook 2']),
+        ('commit', ['commit'], ['push'], [b'hook 1', b'']),
+    )
+)
+def test_local_hook_for_stages(
         repo_with_passing_hook, mock_out_store_directory,
+        stage_for_first_hook,
+        stage_for_second_hook,
+        hook_stage,
+        expected_output
 ):
+    config = OrderedDict((
+        ('repo', 'local'),
+        ('hooks', (OrderedDict((
+            ('id', 'pylint'),
+            ('name', 'hook 1'),
+            ('entry', 'python -m pylint.__main__'),
+            ('language', 'system'),
+            ('files', r'\.py$'),
+            ('stages', stage_for_first_hook)
+        )), OrderedDict((
+            ('id', 'do_not_commit'),
+            ('name', 'hook 2'),
+            ('entry', 'DO NOT COMMIT'),
+            ('language', 'pcre'),
+            ('files', '^(.*)$'),
+            ('stages', stage_for_second_hook)
+        ))))
+    ))
+    add_config_to_repo(repo_with_passing_hook, config)
+
+    with io.open('dummy.py', 'w') as staged_file:
+        staged_file.write('"""TODO: something"""\n')
+    cmd_output('git', 'add', 'dummy.py')
+
+    _test_run(
+        repo_with_passing_hook,
+        {'hook_stage': hook_stage},
+        expected_outputs=expected_output,
+        expected_ret=0,
+        stage=False
+    )
+
+
+def test_local_hook_passes(repo_with_passing_hook, mock_out_store_directory):
     config = OrderedDict((
         ('repo', 'local'),
         ('hooks', (OrderedDict((
@@ -405,16 +525,13 @@ def test_local_hook_passes(
     )
 
 
-def test_local_hook_fails(
-        repo_with_passing_hook, mock_out_store_directory,
-):
+def test_local_hook_fails(repo_with_passing_hook, mock_out_store_directory):
     config = OrderedDict((
         ('repo', 'local'),
         ('hooks', [OrderedDict((
             ('id', 'no-todo'),
             ('name', 'No TODO'),
-            ('entry', 'grep -iI todo'),
-            ('expected_return_value', 1),
+            ('entry', 'sh -c "! grep -iI todo $@" --'),
             ('language', 'system'),
             ('files', ''),
         ))])
@@ -430,64 +547,51 @@ def test_local_hook_fails(
         options={},
         expected_outputs=[b''],
         expected_ret=1,
-        stage=False
+        stage=False,
     )
 
 
-def test_allow_unstaged_config_option(
-        repo_with_passing_hook, mock_out_store_directory,
-):
-    with cwd(repo_with_passing_hook):
-        with io.open('.pre-commit-config.yaml', 'a+') as config_file:
-            # writing a newline should be relatively harmless to get a change
-            config_file.write('\n')
+@pytest.yield_fixture
+def modified_config_repo(repo_with_passing_hook):
+    with modify_config(repo_with_passing_hook, commit=False) as config:
+        # Some minor modification
+        config[0]['hooks'][0]['files'] = ''
+    yield repo_with_passing_hook
 
+
+def test_allow_unstaged_config_option(
+        modified_config_repo, mock_out_store_directory,
+):
     args = _get_opts(allow_unstaged_config=True)
-    ret, printed = _do_run(repo_with_passing_hook, args)
-    assert b'You have an unstaged config file' in printed
-    assert b'have specified the --allow-unstaged-config option.' in printed
+    ret, printed = _do_run(modified_config_repo, args)
+    expected = (
+        b'You have an unstaged config file and have specified the '
+        b'--allow-unstaged-config option.'
+    )
+    assert expected in printed
     assert ret == 0
 
 
-def modify_config(path):
-    with cwd(path):
-        with io.open('.pre-commit-config.yaml', 'a+') as config_file:
-            # writing a newline should be relatively harmless to get a change
-            config_file.write('\n')
-
-
 def test_no_allow_unstaged_config_option(
-    repo_with_passing_hook, mock_out_store_directory,
+        modified_config_repo, mock_out_store_directory,
 ):
-    modify_config(repo_with_passing_hook)
     args = _get_opts(allow_unstaged_config=False)
-    ret, printed = _do_run(repo_with_passing_hook, args)
+    ret, printed = _do_run(modified_config_repo, args)
     assert b'Your .pre-commit-config.yaml is unstaged.' in printed
     assert ret == 1
 
 
-def test_no_stash_suppresses_allow_unstaged_config_option(
-        repo_with_passing_hook, mock_out_store_directory,
+@pytest.mark.parametrize(
+    'opts',
+    (
+        {'allow_unstaged_config': False, 'no_stash': True},
+        {'all_files': True},
+        {'files': [C.CONFIG_FILE]},
+    ),
+)
+def test_unstaged_message_suppressed(
+        modified_config_repo, mock_out_store_directory, opts,
 ):
-    modify_config(repo_with_passing_hook)
-    args = _get_opts(allow_unstaged_config=False, no_stash=True)
-    ret, printed = _do_run(repo_with_passing_hook, args)
-    assert b'Your .pre-commit-config.yaml is unstaged.' not in printed
-
-
-def test_all_files_suppresses_allow_unstaged_config_option(
-        repo_with_passing_hook, mock_out_store_directory,
-):
-    modify_config(repo_with_passing_hook)
-    args = _get_opts(all_files=True)
-    ret, printed = _do_run(repo_with_passing_hook, args)
-    assert b'Your .pre-commit-config.yaml is unstaged.' not in printed
-
-
-def test_files_suppresses_allow_unstaged_config_option(
-        repo_with_passing_hook, mock_out_store_directory,
-):
-    modify_config(repo_with_passing_hook)
-    args = _get_opts(files=['.pre-commit-config.yaml'])
-    ret, printed = _do_run(repo_with_passing_hook, args)
+    args = _get_opts(**opts)
+    ret, printed = _do_run(modified_config_repo, args)
     assert b'Your .pre-commit-config.yaml is unstaged.' not in printed

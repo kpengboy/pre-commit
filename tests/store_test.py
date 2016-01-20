@@ -1,3 +1,4 @@
+# -*- coding: utf-8 -*-
 from __future__ import absolute_import
 from __future__ import unicode_literals
 
@@ -80,8 +81,8 @@ def test_does_not_recreate_if_directory_already_exists(store):
     assert not os.path.exists(os.path.join(store.directory, 'README'))
 
 
-def test_clone(store, tmpdir_factory, log_info_mock):
-    path = git_dir(tmpdir_factory)
+def test_clone(store, tempdir_factory, log_info_mock):
+    path = git_dir(tempdir_factory)
     with cwd(path):
         cmd_output('git', 'commit', '--allow-empty', '-m', 'foo')
         sha = get_head_sha(path)

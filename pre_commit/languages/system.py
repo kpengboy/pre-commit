@@ -1,3 +1,4 @@
+# -*- coding: utf-8 -*-
 from __future__ import unicode_literals
 
 import shlex
@@ -8,7 +9,11 @@ from pre_commit.languages.helpers import file_args_to_stdin
 ENVIRONMENT_DIR = None
 
 
-def install_environment(repo_cmd_runner, version='default'):
+def install_environment(
+        repo_cmd_runner,
+        version='default',
+        additional_dependencies=None,
+):
     """Installation for system type is a noop."""
     raise AssertionError('Cannot install system repo.')
 

@@ -1,3 +1,4 @@
+# -*- coding: utf-8 -*-
 from __future__ import unicode_literals
 
 import contextlib
@@ -5,6 +6,7 @@ import sys
 
 from pre_commit.languages import helpers
 from pre_commit.util import clean_path_on_failure
+from pre_commit.util import shell_escape
 
 
 ENVIRONMENT_DIR = 'node_env'
@@ -23,7 +25,11 @@ def in_env(repo_cmd_runner, language_version):
     yield NodeEnv(repo_cmd_runner, language_version)
 
 
-def install_environment(repo_cmd_runner, version='default'):
+def install_environment(
+        repo_cmd_runner,
+        version='default',
+        additional_dependencies=None,
+):
     assert repo_cmd_runner.exists('package.json')
     directory = helpers.environment_dir(ENVIRONMENT_DIR, version)
 
@@ -40,7 +46,15 @@ def install_environment(repo_cmd_runner, version='default'):
         repo_cmd_runner.run(cmd)
 
         with in_env(repo_cmd_runner, version) as node_env:
-            node_env.run("cd '{prefix}' && npm install -g")
+            node_env.run("cd '{prefix}' && npm install -g", encoding=None)
+            if additional_dependencies:
+                node_env.run(
+                    "cd '{prefix}' && npm install -g " +
+                    ' '.join(
+                        shell_escape(dep) for dep in additional_dependencies
+                    ),
+                    encoding=None,
+                )
 
 
 def run_hook(repo_cmd_runner, hook, file_args):

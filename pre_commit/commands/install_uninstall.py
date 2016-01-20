@@ -1,3 +1,4 @@
+# -*- coding: utf-8 -*-
 from __future__ import print_function
 from __future__ import unicode_literals
 
@@ -9,6 +10,7 @@ import stat
 import sys
 
 from pre_commit.logging_handler import LoggingHandler
+from pre_commit.util import mkdirp
 from pre_commit.util import resource_filename
 
 
@@ -20,10 +22,12 @@ PREVIOUS_IDENTIFYING_HASHES = (
     '4d9958c90bc262f47553e2c073f14cfe',
     'd8ee923c46731b42cd95cc869add4062',
     '49fd668cb42069aa1b6048464be5d395',
+    '79f09a650522a87b0da915d0d983b2de',
+    'e358c9dae00eac5d06b38dfdb1e33a8c',
 )
 
 
-IDENTIFYING_HASH = '79f09a650522a87b0da915d0d983b2de'
+IDENTIFYING_HASH = '138fd403232d2ddd5efb44317e38bf03'
 
 
 def is_our_pre_commit(filename):
@@ -52,8 +56,7 @@ def install(runner, overwrite=False, hooks=False, hook_type='pre-commit'):
     hook_path = runner.get_hook_path(hook_type)
     legacy_path = hook_path + '.legacy'
 
-    if not os.path.exists(os.path.dirname(hook_path)):
-        os.makedirs(os.path.dirname(hook_path))
+    mkdirp(os.path.dirname(hook_path))
 
     # If we have an existing hook, move it to pre-commit.legacy
     if (

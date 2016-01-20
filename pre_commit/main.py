@@ -1,3 +1,4 @@
+# -*- coding: utf-8 -*-
 from __future__ import unicode_literals
 
 import argparse
@@ -10,6 +11,7 @@ from pre_commit import color
 from pre_commit import five
 from pre_commit.commands.autoupdate import autoupdate
 from pre_commit.commands.clean import clean
+from pre_commit.commands.identify import identify
 from pre_commit.commands.install_uninstall import install
 from pre_commit.commands.install_uninstall import uninstall
 from pre_commit.commands.run import run
@@ -34,7 +36,7 @@ def main(argv=None):
         '-V', '--version',
         action='version',
         version='%(prog)s {0}'.format(
-            pkg_resources.get_distribution('pre-commit').version
+            pkg_resources.get_distribution('ckuehl-pre-commit-types').version
         )
     )
 
@@ -67,6 +69,11 @@ def main(argv=None):
         default='pre-commit',
     )
 
+    identify_parser = subparsers.add_parser(
+        'identify', help='Identify a file, listing tags that apply to it',
+    )
+    identify_parser.add_argument('path')
+
     subparsers.add_parser('clean', help='Clean out pre-commit files.')
 
     subparsers.add_parser(
@@ -87,19 +94,22 @@ def main(argv=None):
     run_parser.add_argument(
         '--verbose', '-v', action='store_true', default=False,
     )
-
     run_parser.add_argument(
         '--origin', '-o',
-        help='The origin branch"s commit_id when using `git push`',
+        help='The origin branch\'s commit_id when using `git push`',
     )
     run_parser.add_argument(
         '--source', '-s',
-        help='The remote branch"s commit_id when using `git push`',
+        help='The remote branch\'s commit_id when using `git push`',
     )
     run_parser.add_argument(
         '--allow-unstaged-config', default=False, action='store_true',
         help='Allow an unstaged config to be present.  Note that this will'
         'be stashed before parsing unless --no-stash is specified'
+    )
+    run_parser.add_argument(
+        '--hook-stage', choices=('commit', 'push'), default='commit',
+        help='The stage during which the hook is fired e.g. commit or push',
     )
     run_mutex_group = run_parser.add_mutually_exclusive_group(required=False)
     run_mutex_group.add_argument(
@@ -142,6 +152,8 @@ def main(argv=None):
             return autoupdate(runner)
         elif args.command == 'run':
             return run(runner, args)
+        elif args.command == 'identify':
+            return identify(args)
         else:
             raise NotImplementedError(
                 'Command {0} not implemented.'.format(args.command)
