@@ -12,34 +12,38 @@ from pre_commit.util import cwd
 from testing.fixtures import git_dir
 
 
-def test_get_root_at_root(tmpdir_factory):
-    path = git_dir(tmpdir_factory)
+def test_get_root_at_root(tempdir_factory):
+    path = git_dir(tempdir_factory)
     with cwd(path):
-        assert git.get_root() == path
+        assert os.path.normcase(git.get_root()) == os.path.normcase(path)
 
 
-def test_get_root_deeper(tmpdir_factory):
-    path = git_dir(tmpdir_factory)
+def test_get_root_deeper(tempdir_factory):
+    path = git_dir(tempdir_factory)
 
     foo_path = os.path.join(path, 'foo')
     os.mkdir(foo_path)
     with cwd(foo_path):
-        assert git.get_root() == path
+        assert os.path.normcase(git.get_root()) == os.path.normcase(path)
 
 
-def test_get_root_not_git_dir(tmpdir_factory):
-    with cwd(tmpdir_factory.get()):
+def test_get_root_not_git_dir(tempdir_factory):
+    with cwd(tempdir_factory.get()):
         with pytest.raises(FatalError):
             git.get_root()
 
 
-def test_is_not_in_merge_conflict(tmpdir_factory):
-    path = git_dir(tmpdir_factory)
+def test_is_not_in_merge_conflict(tempdir_factory):
+    path = git_dir(tempdir_factory)
     with cwd(path):
         assert git.is_in_merge_conflict() is False
 
 
 def test_is_in_merge_conflict(in_merge_conflict):
+    assert git.is_in_merge_conflict() is True
+
+
+def test_is_in_merge_conflict_submodule(in_conflicting_submodule):
     assert git.is_in_merge_conflict() is True
 
 
@@ -57,6 +61,7 @@ def get_files_matching_func():
             'pre_commit/main.py',
             'pre_commit/git.py',
             'im_a_file_that_doesnt_exist.py',
+            'testing/test_symlink',
             'hooks.yaml',
         )
 
@@ -69,6 +74,7 @@ def test_get_files_matching_base(get_files_matching_func):
         'pre_commit/main.py',
         'pre_commit/git.py',
         'hooks.yaml',
+        'testing/test_symlink'
     ])
 
 
@@ -92,7 +98,7 @@ def test_does_not_include_deleted_fileS(get_files_matching_func):
 
 def test_exclude_removes_files(get_files_matching_func):
     ret = get_files_matching_func('', '\\.py$')
-    assert ret == set(['hooks.yaml'])
+    assert ret == set(['hooks.yaml', 'testing/test_symlink'])
 
 
 def resolve_conflict():
@@ -109,6 +115,11 @@ def test_get_conflicted_files(in_merge_conflict):
 
     ret = set(git.get_conflicted_files())
     assert ret == set(('conflict_file', 'other_file'))
+
+
+def test_get_conflicted_files_in_submodule(in_conflicting_submodule):
+    resolve_conflict()
+    assert set(git.get_conflicted_files()) == set(('conflict_file',))
 
 
 def test_get_conflicted_files_unstaged_files(in_merge_conflict):

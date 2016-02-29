@@ -26,6 +26,14 @@ def cwd(path):
         os.chdir(original_cwd)
 
 
+def mkdirp(path):
+    try:
+        os.makedirs(path)
+    except OSError:
+        if not os.path.exists(path):
+            raise
+
+
 def memoize_by_cwd(func):
     """Memoize a function call based on os.getcwd()."""
     @functools.wraps(func)
@@ -61,6 +69,20 @@ def noop_context():
 
 def shell_escape(arg):
     return "'" + arg.replace("'", "'\"'\"'".strip()) + "'"
+
+
+def no_git_env():
+    # Too many bugs dealing with environment variables and GIT:
+    # https://github.com/pre-commit/pre-commit/issues/300
+    # In git 2.6.3 (maybe others), git exports GIT_WORK_TREE while running
+    # pre-commit hooks
+    # In git 1.9.1 (maybe others), git exports GIT_DIR and GIT_INDEX_FILE
+    # while running pre-commit hooks in submodules.
+    # GIT_DIR: Causes git clone to clone wrong thing
+    # GIT_INDEX_FILE: Causes 'error invalid object ...' during commit
+    return dict(
+        (k, v) for k, v in os.environ.items() if not k.startswith('GIT_')
+    )
 
 
 @contextlib.contextmanager
@@ -102,26 +124,38 @@ class CalledProcessError(RuntimeError):
         self.expected_returncode = expected_returncode
         self.output = output
 
-    def __str__(self):
+    def to_bytes(self):
         output = []
-        for text in self.output:
-            if text:
-                output.append('\n    ' + text.replace('\n', '\n    '))
+        for maybe_text in self.output:
+            if maybe_text:
+                output.append(
+                    b'\n    ' +
+                    five.to_bytes(maybe_text).replace(b'\n', b'\n    ')
+                )
             else:
-                output.append('(none)')
+                output.append(b'(none)')
 
-        return (
-            'Command: {0!r}\n'
-            'Return code: {1}\n'
-            'Expected return code: {2}\n'
-            'Output: {3}\n'
-            'Errors: {4}\n'.format(
-                self.cmd,
-                self.returncode,
-                self.expected_returncode,
-                *output
-            )
-        )
+        return b''.join((
+            five.to_bytes(
+                'Command: {0!r}\n'
+                'Return code: {1}\n'
+                'Expected return code: {2}\n'.format(
+                    self.cmd, self.returncode, self.expected_returncode
+                )
+            ),
+            b'Output: ', output[0], b'\n',
+            b'Errors: ', output[1], b'\n',
+        ))
+
+    def to_text(self):
+        return self.to_bytes().decode('UTF-8')
+
+    if five.PY3:  # pragma: no cover
+        __bytes__ = to_bytes
+        __str__ = to_text
+    else:
+        __str__ = to_bytes
+        __unicode__ = to_text
 
 
 def cmd_output(*cmd, **kwargs):
@@ -167,7 +201,10 @@ def rmtree(path):
     """On windows, rmtree fails for readonly dirs."""
     def handle_remove_readonly(func, path, exc):  # pragma: no cover (windows)
         excvalue = exc[1]
-        if func in (os.rmdir, os.remove) and excvalue.errno == errno.EACCES:
+        if (
+                func in (os.rmdir, os.remove, os.unlink) and
+                excvalue.errno == errno.EACCES
+        ):
             os.chmod(path, stat.S_IRWXU | stat.S_IRWXG | stat.S_IRWXO)
             func(path)
         else:

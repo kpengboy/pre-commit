@@ -7,6 +7,7 @@ import os.path
 import re
 
 from pre_commit.errors import FatalError
+from pre_commit.util import CalledProcessError
 from pre_commit.util import cmd_output
 from pre_commit.util import memoize_by_cwd
 
@@ -15,22 +16,26 @@ logger = logging.getLogger('pre_commit')
 
 
 def get_root():
-    path = os.getcwd()
-    while path != os.path.normpath(os.path.join(path, '../')):
-        if os.path.exists(os.path.join(path, '.git')):
-            return path
-        else:
-            path = os.path.normpath(os.path.join(path, '../'))
-    raise FatalError(
-        'Called from outside of the gits. '
-        'Please cd to a git repository.'
-    )
+    try:
+        return cmd_output('git', 'rev-parse', '--show-toplevel')[1].strip()
+    except CalledProcessError:
+        raise FatalError(
+            'Called from outside of the gits.  Please cd to a git repository.'
+        )
+
+
+def get_git_dir(git_root):
+    return os.path.normpath(os.path.join(
+        git_root,
+        cmd_output('git', 'rev-parse', '--git-dir', cwd=git_root)[1].strip(),
+    ))
 
 
 def is_in_merge_conflict():
+    git_dir = get_git_dir('.')
     return (
-        os.path.exists(os.path.join('.git', 'MERGE_MSG')) and
-        os.path.exists(os.path.join('.git', 'MERGE_HEAD'))
+        os.path.exists(os.path.join(git_dir, 'MERGE_MSG')) and
+        os.path.exists(os.path.join(git_dir, 'MERGE_HEAD'))
     )
 
 
@@ -49,7 +54,7 @@ def get_conflicted_files():
     logger.info('Checking merge-conflict files only.')
     # Need to get the conflicted files from the MERGE_MSG because they could
     # have resolved the conflict by choosing one side or the other
-    merge_msg = open(os.path.join('.git', 'MERGE_MSG')).read()
+    merge_msg = open(os.path.join(get_git_dir('.'), 'MERGE_MSG')).read()
     merge_conflict_filenames = parse_merge_msg_for_conflicts(merge_msg)
 
     # This will get the rest of the changes made after the merge.
@@ -84,7 +89,7 @@ def get_files_matching(all_file_list_strategy):
             if (
                 include_regex.search(filename) and
                 not exclude_regex.search(filename) and
-                os.path.exists(filename)
+                os.path.lexists(filename)
             )
         )
     return wrapper

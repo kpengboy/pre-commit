@@ -9,7 +9,7 @@ setup(
         'hooks.'
     ),
     url='https://github.com/pre-commit/pre-commit',
-    version='0.5.4',
+    version='0.7.6',
 
     author='Anthony Sottile',
     author_email='asottile@umich.edu',
@@ -23,6 +23,7 @@ setup(
         'Programming Language :: Python :: 3',
         'Programming Language :: Python :: 3.3',
         'Programming Language :: Python :: 3.4',
+        'Programming Language :: Python :: 3.5',
         'Programming Language :: Python :: Implementation :: CPython',
         'Programming Language :: Python :: Implementation :: PyPy',
     ],
@@ -45,14 +46,13 @@ setup(
         'nodeenv>=0.11.1',
         'ordereddict',
         'pyyaml',
-        'simplejson',
         'virtualenv',
     ],
     entry_points={
         'console_scripts': [
             'pre-commit = pre_commit.main:main',
-            'validate-config = pre_commit.clientlib.validate_config:run',
-            'validate-manifest = pre_commit.clientlib.validate_manifest:run',
+            'pre-commit-validate-config = pre_commit.clientlib.validate_config:run',  # noqa
+            'pre-commit-validate-manifest = pre_commit.clientlib.validate_manifest:run',  # noqa
         ],
     },
 )

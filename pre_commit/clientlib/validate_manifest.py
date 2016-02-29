@@ -17,20 +17,34 @@ MANIFEST_JSON_SCHEMA = {
         'type': 'object',
         'properties': {
             'id': {'type': 'string'},
+            'always_run': {'type': 'boolean', 'default': False},
             'name': {'type': 'string'},
             'description': {'type': 'string', 'default': ''},
             'entry': {'type': 'string'},
             'exclude': {'type': 'string', 'default': '^$'},
             'language': {'type': 'string'},
             'language_version': {'type': 'string', 'default': 'default'},
+            'minimum_pre_commit_version': {
+                'type': 'string', 'default': '0.0.0',
+            },
             'files': {'type': 'string'},
-            'expected_return_value': {'type': 'number', 'default': 0},
+            'stages': {
+                'type': 'array',
+                'default': [],
+                'items': {
+                    'type': 'string',
+                },
+            },
             'args': {
                 'type': 'array',
                 'default': [],
                 'items': {
                     'type': 'string',
                 },
+            },
+            'additional_dependencies': {
+                'type': 'array',
+                'items': {'type': 'string'},
             },
         },
         'required': ['id', 'name', 'entry', 'language', 'files'],

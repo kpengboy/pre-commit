@@ -32,10 +32,15 @@ CONFIG_JSON_SCHEMA = {
                     'type': 'object',
                     'properties': {
                         'id': {'type': 'string'},
+                        'always_run': {'type': 'boolean'},
                         'files': {'type': 'string'},
                         'exclude': {'type': 'string'},
                         'language_version': {'type': 'string'},
                         'args': {
+                            'type': 'array',
+                            'items': {'type': 'string'},
+                        },
+                        'additional_dependencies': {
                             'type': 'array',
                             'items': {'type': 'string'},
                         },

@@ -10,3 +10,11 @@ do
         fi
     fi
 done
+
+if [ "$args" != "" ]; then
+    args="$args --hook-stage push"
+else
+    # If args is empty, then an attempt to push on an empty
+    # changeset is being made. In this case, just exit cleanly
+    exit 0
+fi

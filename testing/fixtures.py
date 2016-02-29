@@ -1,10 +1,12 @@
 from __future__ import absolute_import
 from __future__ import unicode_literals
 
+import contextlib
 import io
 import os.path
 
 from aspy.yaml import ordered_dump
+from aspy.yaml import ordered_load
 
 import pre_commit.constants as C
 from pre_commit.clientlib.validate_config import CONFIG_JSON_SCHEMA
@@ -19,20 +21,45 @@ from testing.util import get_head_sha
 from testing.util import get_resource_path
 
 
-def git_dir(tmpdir_factory):
-    path = tmpdir_factory.get()
+def git_dir(tempdir_factory):
+    path = tempdir_factory.get()
     with cwd(path):
         cmd_output('git', 'init')
     return path
 
 
-def make_repo(tmpdir_factory, repo_source):
-    path = git_dir(tmpdir_factory)
+def make_repo(tempdir_factory, repo_source):
+    path = git_dir(tempdir_factory)
     copy_tree_to_path(get_resource_path(repo_source), path)
     with cwd(path):
         cmd_output('git', 'add', '.')
         cmd_output('git', 'commit', '-m', 'Add hooks')
     return path
+
+
+@contextlib.contextmanager
+def modify_manifest(path):
+    """Modify the manifest yielded by this context to write to hooks.yaml."""
+    manifest_path = os.path.join(path, C.MANIFEST_FILE)
+    manifest = ordered_load(io.open(manifest_path).read())
+    yield manifest
+    with io.open(manifest_path, 'w') as manifest_file:
+        manifest_file.write(ordered_dump(manifest, **C.YAML_DUMP_KWARGS))
+    cmd_output('git', 'commit', '-am', 'update hooks.yaml', cwd=path)
+
+
+@contextlib.contextmanager
+def modify_config(path='.', commit=True):
+    """Modify the config yielded by this context to write to
+    .pre-commit-config.yaml
+    """
+    config_path = os.path.join(path, C.CONFIG_FILE)
+    config = ordered_load(io.open(config_path).read())
+    yield config
+    with io.open(config_path, 'w', encoding='UTF-8') as config_file:
+        config_file.write(ordered_dump(config, **C.YAML_DUMP_KWARGS))
+    if commit:
+        cmd_output('git', 'commit', '-am', 'update config', cwd=path)
 
 
 def config_with_local_hooks():
@@ -83,8 +110,8 @@ def add_config_to_repo(git_path, config):
     return git_path
 
 
-def make_consuming_repo(tmpdir_factory, repo_source):
-    path = make_repo(tmpdir_factory, repo_source)
+def make_consuming_repo(tempdir_factory, repo_source):
+    path = make_repo(tempdir_factory, repo_source)
     config = make_config_from_repo(path)
-    git_path = git_dir(tmpdir_factory)
+    git_path = git_dir(tempdir_factory)
     return add_config_to_repo(git_path, config)
