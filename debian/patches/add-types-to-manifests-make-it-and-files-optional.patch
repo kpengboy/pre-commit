@@ -1,0 +1,77 @@
+Author: Chris Kuehl <ckuehl@ocf.berkeley.edu>
+Subject: Add types to manifests, make it and files optional
+Forwarded: not-needed
+
+--- a/pre_commit/clientlib/validate_config.py
++++ b/pre_commit/clientlib/validate_config.py
+@@ -44,6 +44,10 @@ CONFIG_JSON_SCHEMA = {
+                             'type': 'array',
+                             'items': {'type': 'string'},
+                         },
++                        'types': {
++                            'type': 'array',
++                            'items': {'type': 'string'}
++                        },
+                     },
+                     'required': ['id'],
+                 }
+--- a/pre_commit/clientlib/validate_manifest.py
++++ b/pre_commit/clientlib/validate_manifest.py
+@@ -27,7 +27,11 @@ MANIFEST_JSON_SCHEMA = {
+             'minimum_pre_commit_version': {
+                 'type': 'string', 'default': '0.0.0',
+             },
+-            'files': {'type': 'string'},
++            'files': {
++                'type': 'string',
++                # empty regex to match all files
++                'default': '',
++            },
+             'stages': {
+                 'type': 'array',
+                 'default': [],
+@@ -35,19 +39,22 @@ MANIFEST_JSON_SCHEMA = {
+                     'type': 'string',
+                 },
+             },
++            'types': {
++                'type': 'array',
++                'items': {'type': 'string'},
++                'default': ['file'],
++            },
+             'args': {
+                 'type': 'array',
+                 'default': [],
+-                'items': {
+-                    'type': 'string',
+-                },
++                'items': {'type': 'string'},
+             },
+             'additional_dependencies': {
+                 'type': 'array',
+                 'items': {'type': 'string'},
+             },
+         },
+-        'required': ['id', 'name', 'entry', 'language', 'files'],
++        'required': ['id', 'name', 'entry', 'language'],
+     },
+ }
+ 
+--- a/tests/manifest_test.py
++++ b/tests/manifest_test.py
+@@ -25,6 +25,7 @@ def test_manifest_contents(manifest):
+         'entry': 'bin/hook.sh',
+         'exclude': '^$',
+         'files': '',
++        'types': ['file'],
+         'id': 'bash_hook',
+         'language': 'script',
+         'language_version': 'default',
+@@ -42,6 +43,7 @@ def test_hooks(manifest):
+         'entry': 'bin/hook.sh',
+         'exclude': '^$',
+         'files': '',
++        'types': ['file'],
+         'id': 'bash_hook',
+         'language': 'script',
+         'language_version': 'default',

@@ -34,18 +34,13 @@ setup(
         'pre_commit': [
             'resources/hook-tmpl',
             'resources/pre-push-tmpl',
-            'resources/rbenv.tar.gz',
-            'resources/ruby-build.tar.gz',
-            'resources/ruby-download.tar.gz',
         ]
     },
     install_requires=[
-        'argparse',
         'aspy.yaml',
         'cached-property',
         'jsonschema',
         'nodeenv>=0.11.1',
-        'ordereddict',
         'pyyaml',
         'virtualenv',
     ],

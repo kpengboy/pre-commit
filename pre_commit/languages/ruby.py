@@ -3,6 +3,7 @@ from __future__ import unicode_literals
 
 import contextlib
 import io
+import os
 import shutil
 
 from pre_commit.languages import helpers
@@ -31,22 +32,7 @@ def in_env(repo_cmd_runner, language_version):
 
 def _install_rbenv(repo_cmd_runner, version='default'):
     directory = helpers.environment_dir(ENVIRONMENT_DIR, version)
-
-    with tarfile_open(resource_filename('rbenv.tar.gz')) as tf:
-        tf.extractall(repo_cmd_runner.path('.'))
-    shutil.move(
-        repo_cmd_runner.path('rbenv'), repo_cmd_runner.path(directory),
-    )
-
-    # Only install ruby-build if the version is specified
-    if version != 'default':
-        # ruby-download
-        with tarfile_open(resource_filename('ruby-download.tar.gz')) as tf:
-            tf.extractall(repo_cmd_runner.path(directory, 'plugins'))
-
-        # ruby-build
-        with tarfile_open(resource_filename('ruby-build.tar.gz')) as tf:
-            tf.extractall(repo_cmd_runner.path(directory, 'plugins'))
+    os.makedirs(os.path.join(repo_cmd_runner.path(directory), 'bin'))
 
     activate_path = repo_cmd_runner.path(directory, 'bin', 'activate')
     with io.open(activate_path, 'w') as activate_file:

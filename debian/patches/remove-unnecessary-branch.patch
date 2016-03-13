@@ -1,0 +1,15 @@
+Author: Chris Kuehl <ckuehl@ocf.berkeley.edu>
+Subject: Remove unnecessary branch
+Forwarded: not-needed
+
+--- a/pre_commit/commands/run.py
++++ b/pre_commit/commands/run.py
+@@ -84,7 +84,7 @@ def _run_single_hook(hook, repo, args, write, skips=frozenset()):
+         args,
+         hook['files'],
+         hook['exclude'],
+-        frozenset(hook['types']) if 'types' in hook else frozenset(['file']),
++        frozenset(hook['types']),
+     )
+     if hook['id'] in skips:
+         _print_user_skipped(hook, write, args)

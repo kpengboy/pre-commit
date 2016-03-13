@@ -1,0 +1,46 @@
+Author: Chris Kuehl <ckuehl@ocf.berkeley.edu>
+Subject: Add simple identify command
+Forwarded: not-needed
+
+--- /dev/null
++++ b/pre_commit/commands/identify.py
+@@ -0,0 +1,8 @@
++from pre_commit import git
++from pre_commit.file_classifier.classifier import classify
++
++
++def identify(args):
++    # TODO: more useful output
++    # TODO: check whether file is in git repo first?
++    print(classify(args.path, git.guess_git_type_for_file(args.path)))
+--- a/pre_commit/main.py
++++ b/pre_commit/main.py
+@@ -10,6 +10,7 @@ from pre_commit import color
+ from pre_commit import five
+ from pre_commit.commands.autoupdate import autoupdate
+ from pre_commit.commands.clean import clean
++from pre_commit.commands.identify import identify
+ from pre_commit.commands.install_uninstall import install
+ from pre_commit.commands.install_uninstall import uninstall
+ from pre_commit.commands.run import run
+@@ -67,6 +68,11 @@ def main(argv=None):
+         default='pre-commit',
+     )
+ 
++    identify_parser = subparsers.add_parser(
++        'identify', help='Identify a file, listing tags that apply to it',
++    )
++    identify_parser.add_argument('path')
++
+     subparsers.add_parser('clean', help='Clean out pre-commit files.')
+ 
+     subparsers.add_parser(
+@@ -145,6 +151,8 @@ def main(argv=None):
+             return autoupdate(runner)
+         elif args.command == 'run':
+             return run(runner, args)
++        elif args.command == 'identify':
++            return identify(args)
+         else:
+             raise NotImplementedError(
+                 'Command {0} not implemented.'.format(args.command)

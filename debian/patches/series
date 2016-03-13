@@ -1,2 +1,12 @@
 remove_py2_deps.patch
 unvendor_rbenv.patch
+add-file-classification-package.patch
+add-types-to-manifests-make-it-and-files-optional.patch
+target-files-by-type-as-well-as-path-regex.patch
+add-simple-identify-command.patch
+temporarily-lower-coverage-requirements.patch
+use-os.access-over-os.stat-for-executeable-check.patch
+remove-unnecessary-branch.patch
+add-and-run-fix-encoding-pragma-hook.patch
+clarify-docstring-in-shebang-reader.patch
+make-temporary-fork.patch

@@ -1,0 +1,349 @@
+Author: Chris Kuehl <ckuehl@yelp.com>
+Subject: Add file classification package
+Forwarded: not-needed
+
+--- /dev/null
++++ b/pre_commit/file_classifier/classifier.py
+@@ -0,0 +1,142 @@
++# encoding: utf-8
++import io
++import re
++import string
++from itertools import chain
++from os.path import basename
++
++from pre_commit.file_classifier.extensions import KNOWN_EXTENSIONS
++from pre_commit.file_classifier.interpreters import KNOWN_INTERPRETERS
++from pre_commit.git import GIT_MODE_EXECUTABLE
++from pre_commit.git import GIT_MODE_FILE
++from pre_commit.git import GIT_MODE_SUBMODULE
++from pre_commit.git import GIT_MODE_SYMLINK
++
++
++def classify(path, mode):
++    """Return a set of tags for a file.
++
++    :param path: path to the file
++    :param mode: Git mode of the file
++    :return: set of tags
++    """
++    tags = set()
++
++    if mode in (GIT_MODE_FILE, GIT_MODE_EXECUTABLE):
++        tags.add('file')
++
++        types = _guess_types_from_extension(path)
++        if types:
++            tags.update(types)
++
++        if _file_is_binary(path):
++            tags.add('binary')
++        else:
++            tags.add('text')
++            if not types:
++                # only check the shebang if we couldn't guess by extension;
++                # it's much slower
++                tags.update(_guess_types_from_shebang(path))
++
++        if mode == GIT_MODE_EXECUTABLE:
++            tags.add('executable')
++        else:
++            tags.add('nonexecutable')
++
++    elif mode == GIT_MODE_SYMLINK:
++        tags.add('symlink')
++    elif mode == GIT_MODE_SUBMODULE:
++        tags.add('submodule')
++    else:
++        raise ValueError('Unknown git object mode: {}'.format(mode))
++
++    return tags
++
++
++def _guess_types_from_extension(path):
++    """Guess types for a file based on extension.
++
++    An extension could map to multiple file types, in which case we return the
++    concatenation of types.
++    """
++    filename = basename(path)
++    return list(chain.from_iterable(
++        types for regex, types in KNOWN_EXTENSIONS
++        if re.search(regex, filename)
++    ))
++
++
++def _guess_types_from_shebang(path):
++    """Guess types for a text file based on shebang.
++
++    A shebang could map to multiple file types, in which case we return the
++    concatenation of types.
++    """
++    interpreter = _read_interpreter_from_shebang(path)
++    if interpreter:
++        return chain.from_iterable(
++            types for regex, types in KNOWN_INTERPRETERS
++            if re.match(regex, interpreter)
++        )
++    else:
++        return []
++
++
++def _read_interpreter_from_shebang(path):
++    """Read an interpreter from a file's shebang.
++
++    The first line of a script is guaranteed to be ASCII, so we read ASCII
++    until we hit a newline (at which point we check if we read a valid shebang)
++    or a non-ASCII character (at which point we bail).
++
++    :param path: path to text file
++    :return: interpreter, or None if no shebang could be read
++    """
++    MAX_SHEBANG_LENGTH = 128  # Linux kernel limit on shebangs
++
++    with io.open(path, 'rb') as f:
++        bytes_read = f.read(MAX_SHEBANG_LENGTH)
++
++    chars_read = ''
++    for i in range(MAX_SHEBANG_LENGTH):
++        try:
++            char = bytes_read[i:i + 1].decode('ascii')
++            if char not in string.printable:
++                return None
++        except UnicodeDecodeError:
++            return None  # no valid shebang
++
++        if char != '\n':
++            chars_read += char
++        else:
++            break
++
++    if chars_read.startswith('#!'):
++        words = chars_read[2:].strip().split()
++        if not words or not words[0]:
++            return None
++
++        # take the first word of the shebang as the interpreter, unless that
++        # word is something like /usr/bin/env
++        if words[0].endswith('/env') and len(words) == 2:
++            interpreter = words[1]
++        else:
++            interpreter = words[0]
++
++        return interpreter.split('/')[-1]
++
++
++def _file_is_binary(path):
++    """Return whether the file seems to be binary.
++
++    This is roughly based on libmagic's binary/text detection:
++    https://github.com/file/file/blob/master/src/encoding.c#L203-L228
++    """
++    text_chars = (
++        bytearray([7, 8, 9, 10, 12, 13, 27]) +
++        bytearray(range(0x20, 0x7F)) +
++        bytearray(range(0x80, 0X100))
++    )
++    with io.open(path, 'rb') as f:
++        b = f.read(1024)  # only read first KB
++    return bool(b.translate(None, text_chars))
+--- /dev/null
++++ b/pre_commit/file_classifier/extensions.py
+@@ -0,0 +1,28 @@
++"""List of known filename to file type mappings.
++
++The list consists of tuples of (filename regex, list of types).
++
++Most of these are extensions (e.g. *.py -> python), but some just use the
++filename (e.g. Makefile -> make).
++"""
++KNOWN_EXTENSIONS = [
++    (r'\.js$', ['javascript']),
++    (r'\.json$', ['json']),
++    (r'\.py$', ['python']),
++    (r'\.rb$', ['ruby']),
++    (r'\.sh$', ['shell']),
++    (r'\.e?ya?ml$', ['yaml']),
++    (r'\.pp$', ['puppet']),
++    (r'\.erb$', ['erb']),
++    (r'\.json$', ['json']),
++    (r'\.xml$', ['xml']),
++    (r'\.c$', ['c']),
++    (r'^Makefile$', ['make']),
++    (r'\.mk$', ['make']),
++    (r'\.png$', ['png']),
++    (r'\.gif$', ['gif']),
++    (r'\.svg$', ['svg']),
++    (r'\.css$', ['css']),
++    (r'\.html?$', ['html']),
++    (r'\.php\d?$', ['php']),
++]
+--- /dev/null
++++ b/pre_commit/file_classifier/interpreters.py
+@@ -0,0 +1,6 @@
++KNOWN_INTERPRETERS = [
++    ('^python([23](\.[0-9]+)?)?$', ['python']),
++    ('^(ba|da|tc|[ckz])?sh$', ['shell']),
++    ('^ruby$', ['ruby']),
++    ('^node(js)?$', ['javascript']),
++]
+--- a/pre_commit/git.py
++++ b/pre_commit/git.py
+@@ -11,6 +11,11 @@ from pre_commit.util import CalledProcessError
+ from pre_commit.util import cmd_output
+ from pre_commit.util import memoize_by_cwd
+ 
++GIT_MODE_FILE = 0o100644
++GIT_MODE_EXECUTABLE = 0o100755
++GIT_MODE_SYMLINK = 0o120000
++GIT_MODE_SUBMODULE = 0o160000
++
+ 
+ logger = logging.getLogger('pre_commit')
+ 
+--- /dev/null
++++ b/tests/file_classifier/classifier_test.py
+@@ -0,0 +1,143 @@
++# encoding: utf-8
++from __future__ import unicode_literals
++
++from contextlib import contextmanager
++
++import mock
++import pytest
++
++from pre_commit.file_classifier.classifier import _file_is_binary
++from pre_commit.file_classifier.classifier import _guess_types_from_extension
++from pre_commit.file_classifier.classifier import _guess_types_from_shebang
++from pre_commit.file_classifier.classifier import _read_interpreter_from_shebang  # noqa
++from pre_commit.file_classifier.classifier import classify
++from pre_commit.git import GIT_MODE_EXECUTABLE
++from pre_commit.git import GIT_MODE_FILE
++from pre_commit.git import GIT_MODE_SUBMODULE
++from pre_commit.git import GIT_MODE_SYMLINK
++
++
++@contextmanager
++def mock_open(read_data):
++    # mock_open doesn't support reading binary data :\
++    # https://bugs.python.org/issue23004
++    with mock.patch('io.open') as m:
++        mock_read = m.return_value.__enter__().read
++        mock_read.return_value = read_data
++        yield m
++
++
++@pytest.mark.parametrize('path,data,mode,expected', [
++    (
++        'test.py',
++        b'def main():\n    pass\n',
++        GIT_MODE_FILE,
++        ['file', 'text', 'python', 'nonexecutable'],
++    ),
++    (
++        'Makefile',
++        b'test:\n\ttac /etc/passwd\n',
++        GIT_MODE_FILE,
++        ['file', 'text', 'make', 'nonexecutable'],
++    ),
++    (
++        'delete-everything',
++        b'#!/bin/bash\nrm -rf /\n',
++        GIT_MODE_EXECUTABLE,
++        ['file', 'text', 'shell', 'executable'],
++    ),
++    (
++        'bin/bash',
++        b'\x7f\x45\x4c\x46\x02\x01\x01',
++        GIT_MODE_EXECUTABLE,
++        ['file', 'binary', 'executable'],
++    ),
++    (
++        'modules/apache2',
++        None,
++        GIT_MODE_SUBMODULE,
++        ['submodule'],
++    ),
++    (
++        'some/secret',
++        None,
++        GIT_MODE_SYMLINK,
++        ['symlink'],
++    ),
++])
++def test_classify(path, data, mode, expected):
++    with mock_open(data):
++        assert set(classify(path, mode)) == set(expected)
++
++
++def test_classify_invalid():
++    # should raise ValueError if given a mode that it doesn't know about
++    with pytest.raises(ValueError):
++        classify('some_path', 9999)
++
++
++@pytest.mark.parametrize('path,expected', [
++    ('/hello/foo.py', ['python']),
++    ('a/b/c/d/e.rb', ['ruby']),
++    ('derp.sh', ['shell']),
++    ('derp.tmpl.sh', ['shell']),
++
++    ('', []),
++    ('derpsh', []),
++    ('\x7f\x45\x4c\x46\x02\x01\x01\x00\x00', []),
++])
++def test_guess_types_from_extension(path, expected):
++    assert set(_guess_types_from_extension(path)) == set(expected)
++
++
++@pytest.mark.parametrize('data,expected', [
++    (b'#!/usr/bin/env python3\nasdf', ['python']),
++    (b'#!/usr/bin/env /usr/bin/python2.7\nasdf', ['python']),
++    (b'#!/bin/bash -euxm', ['shell']),
++    (b'#!/bin/sh -euxm', ['shell']),
++
++    (b'', []),
++    (b'\x7f\x45\x4c\x46\x02\x01\x01\x00\x00', []),
++])
++def test_guess_types_from_shebang(data, expected):
++    with mock_open(data):
++        assert set(_guess_types_from_shebang('/etc/passwd')) == set(expected)
++
++
++@pytest.mark.parametrize('data,expected', [
++    (b'#!/usr/bin/env python3\nasdf', 'python3'),
++    (b'#!/bin/bash -euxm', 'bash'),
++    (b'#!/bin/bash -e -u -x -m', 'bash'),
++    (b'#! /usr/bin/python    ', 'python'),
++
++    (b'what is this', None),
++    (b'', None),
++    (b'#!\n/usr/bin/python', None),
++    (b'\n#!/usr/bin/python', None),
++    ('#!/usr/bin/énv python3\nasdf'.encode('utf8'), None),
++    (b'#!         ', None),
++    (b'\x7f\x45\x4c\x46\x02\x01\x01\x00\x00', None),
++    (b'#!\x7f\x45\x4c\x46\x02\x01\x01\x00\x00', None),
++])
++def test_read_interpreter_from_shebang(data, expected):
++    with mock_open(data) as m:
++        assert _read_interpreter_from_shebang('/etc/passwd') == expected
++        m.assert_called_once_with('/etc/passwd', 'rb')
++
++
++@pytest.mark.parametrize('data,expected', [
++    (b'hello world', False),
++    (b'', False),
++    ('éóñəå  ⊂(◉‿◉)つ(ノ≥∇≤)ノ'.encode('utf8'), False),
++    ('¯\_(ツ)_/¯'.encode('utf8'), False),
++    ('♪┏(・o･)┛♪┗ ( ･o･) ┓♪┏ ( ) ┛♪┗ (･o･ ) ┓♪┏(･o･)┛♪'.encode('utf8'), False),
++    ('éóñå'.encode('latin1'), False),
++
++    (b'hello world\x00', True),
++    (b'\x7f\x45\x4c\x46\x02\x01\x01', True),  # first few bytes of /bin/bash
++    (b'\x43\x92\xd9\x0f\xaf\x32\x2c', True),  # some /dev/urandom output
++])
++def test_file_is_binary(data, expected):
++    with mock_open(data) as m:
++        assert _file_is_binary('/etc/passwd') is expected
++        m.assert_called_once_with('/etc/passwd', 'rb')

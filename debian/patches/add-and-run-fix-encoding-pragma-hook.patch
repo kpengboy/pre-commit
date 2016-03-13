@@ -1,0 +1,559 @@
+Author: Chris Kuehl <ckuehl@ocf.berkeley.edu>
+Subject: Add and run `fix-encoding-pragma` hook
+Forwarded: not-needed
+
+--- a/.pre-commit-config.yaml
++++ b/.pre-commit-config.yaml
+@@ -1,5 +1,5 @@
+ -   repo: https://github.com/pre-commit/pre-commit-hooks.git
+-    sha: cf550fcab3f12015f8676b8278b30e1a5bc10e70
++    sha: 5edf945ca57abe10a8f090f18e575eabb6a9585a
+     hooks:
+     -   id: trailing-whitespace
+     -   id: end-of-file-fixer
+@@ -11,13 +11,14 @@
+     -   id: name-tests-test
+     -   id: requirements-txt-fixer
+     -   id: flake8
++    -   id: fix-encoding-pragma
+ -   repo: https://github.com/pre-commit/pre-commit.git
+-    sha: 8dba3281d5051060755459dcf88e28fc26c27526
++    sha: 75aaadd4c455043b0fff3cc22eb480f6a120caaf
+     hooks:
+     -   id: validate_config
+     -   id: validate_manifest
+ -   repo: https://github.com/asottile/reorder_python_imports.git
+-    sha: 3d86483455ab5bd06cc1069fdd5ac57be5463f10
++    sha: 8b583ac1beb0dd0f14c4bceb0a53bb1023cb3dd7
+     hooks:
+     -   id: reorder-python-imports
+         language_version: python2.7
+--- a/pre_commit/__main__.py
++++ b/pre_commit/__main__.py
+@@ -1,3 +1,4 @@
++# -*- coding: utf-8 -*-
+ from __future__ import absolute_import
+ 
+ from pre_commit.main import main
+--- a/pre_commit/clientlib/validate_base.py
++++ b/pre_commit/clientlib/validate_base.py
+@@ -1,3 +1,4 @@
++# -*- coding: utf-8 -*-
+ from __future__ import print_function
+ from __future__ import unicode_literals
+ 
+--- a/pre_commit/clientlib/validate_config.py
++++ b/pre_commit/clientlib/validate_config.py
+@@ -1,3 +1,4 @@
++# -*- coding: utf-8 -*-
+ from __future__ import unicode_literals
+ 
+ from pre_commit.clientlib.validate_base import get_run_function
+--- a/pre_commit/clientlib/validate_manifest.py
++++ b/pre_commit/clientlib/validate_manifest.py
+@@ -1,3 +1,4 @@
++# -*- coding: utf-8 -*-
+ from __future__ import unicode_literals
+ 
+ from pre_commit.clientlib.validate_base import get_run_function
+--- a/pre_commit/color.py
++++ b/pre_commit/color.py
+@@ -1,3 +1,4 @@
++# -*- coding: utf-8 -*-
+ from __future__ import unicode_literals
+ 
+ import sys
+--- a/pre_commit/commands/autoupdate.py
++++ b/pre_commit/commands/autoupdate.py
+@@ -1,3 +1,4 @@
++# -*- coding: utf-8 -*-
+ from __future__ import print_function
+ from __future__ import unicode_literals
+ 
+--- a/pre_commit/commands/clean.py
++++ b/pre_commit/commands/clean.py
+@@ -1,3 +1,4 @@
++# -*- coding: utf-8 -*-
+ from __future__ import print_function
+ from __future__ import unicode_literals
+ 
+--- a/pre_commit/commands/identify.py
++++ b/pre_commit/commands/identify.py
+@@ -1,3 +1,4 @@
++# -*- coding: utf-8 -*-
+ from pre_commit import git
+ from pre_commit.file_classifier.classifier import classify
+ 
+--- a/pre_commit/commands/install_uninstall.py
++++ b/pre_commit/commands/install_uninstall.py
+@@ -1,3 +1,4 @@
++# -*- coding: utf-8 -*-
+ from __future__ import print_function
+ from __future__ import unicode_literals
+ 
+--- a/pre_commit/commands/run.py
++++ b/pre_commit/commands/run.py
+@@ -1,3 +1,4 @@
++# -*- coding: utf-8 -*-
+ from __future__ import print_function
+ from __future__ import unicode_literals
+ 
+--- a/pre_commit/constants.py
++++ b/pre_commit/constants.py
+@@ -1,3 +1,4 @@
++# -*- coding: utf-8 -*-
+ from __future__ import unicode_literals
+ 
+ 
+--- a/pre_commit/error_handler.py
++++ b/pre_commit/error_handler.py
+@@ -1,3 +1,4 @@
++# -*- coding: utf-8 -*-
+ from __future__ import absolute_import
+ from __future__ import print_function
+ from __future__ import unicode_literals
+--- a/pre_commit/errors.py
++++ b/pre_commit/errors.py
+@@ -1,3 +1,4 @@
++# -*- coding: utf-8 -*-
+ from __future__ import absolute_import
+ from __future__ import unicode_literals
+ 
+--- a/pre_commit/file_classifier/classifier.py
++++ b/pre_commit/file_classifier/classifier.py
+@@ -1,4 +1,4 @@
+-# encoding: utf-8
++# -*- coding: utf-8 -*-
+ import io
+ import re
+ import string
+--- a/pre_commit/file_classifier/extensions.py
++++ b/pre_commit/file_classifier/extensions.py
+@@ -1,3 +1,4 @@
++# -*- coding: utf-8 -*-
+ """List of known filename to file type mappings.
+ 
+ The list consists of tuples of (filename regex, list of types).
+--- a/pre_commit/file_classifier/interpreters.py
++++ b/pre_commit/file_classifier/interpreters.py
+@@ -1,3 +1,4 @@
++# -*- coding: utf-8 -*-
+ KNOWN_INTERPRETERS = [
+     ('^python([23](\.[0-9]+)?)?$', ['python']),
+     ('^(ba|da|tc|[ckz])?sh$', ['shell']),
+--- a/pre_commit/five.py
++++ b/pre_commit/five.py
+@@ -1,3 +1,4 @@
++# -*- coding: utf-8 -*-
+ from __future__ import unicode_literals
+ 
+ # pylint:disable=invalid-name
+--- a/pre_commit/git.py
++++ b/pre_commit/git.py
+@@ -1,3 +1,4 @@
++# -*- coding: utf-8 -*-
+ from __future__ import unicode_literals
+ 
+ import functools
+--- a/pre_commit/jsonschema_extensions.py
++++ b/pre_commit/jsonschema_extensions.py
+@@ -1,3 +1,4 @@
++# -*- coding: utf-8 -*-
+ from __future__ import unicode_literals
+ 
+ import copy
+--- a/pre_commit/languages/all.py
++++ b/pre_commit/languages/all.py
+@@ -1,3 +1,4 @@
++# -*- coding: utf-8 -*-
+ from __future__ import unicode_literals
+ 
+ from pre_commit.languages import node
+--- a/pre_commit/languages/helpers.py
++++ b/pre_commit/languages/helpers.py
+@@ -1,3 +1,4 @@
++# -*- coding: utf-8 -*-
+ from __future__ import unicode_literals
+ 
+ import pipes
+--- a/pre_commit/languages/node.py
++++ b/pre_commit/languages/node.py
+@@ -1,3 +1,4 @@
++# -*- coding: utf-8 -*-
+ from __future__ import unicode_literals
+ 
+ import contextlib
+--- a/pre_commit/languages/pcre.py
++++ b/pre_commit/languages/pcre.py
+@@ -1,3 +1,4 @@
++# -*- coding: utf-8 -*-
+ from __future__ import unicode_literals
+ 
+ from sys import platform
+--- a/pre_commit/languages/python.py
++++ b/pre_commit/languages/python.py
+@@ -1,3 +1,4 @@
++# -*- coding: utf-8 -*-
+ from __future__ import unicode_literals
+ 
+ import contextlib
+--- a/pre_commit/languages/ruby.py
++++ b/pre_commit/languages/ruby.py
+@@ -1,3 +1,4 @@
++# -*- coding: utf-8 -*-
+ from __future__ import unicode_literals
+ 
+ import contextlib
+--- a/pre_commit/languages/script.py
++++ b/pre_commit/languages/script.py
+@@ -1,3 +1,4 @@
++# -*- coding: utf-8 -*-
+ from __future__ import unicode_literals
+ 
+ from pre_commit.languages.helpers import file_args_to_stdin
+--- a/pre_commit/languages/system.py
++++ b/pre_commit/languages/system.py
+@@ -1,3 +1,4 @@
++# -*- coding: utf-8 -*-
+ from __future__ import unicode_literals
+ 
+ import shlex
+--- a/pre_commit/logging_handler.py
++++ b/pre_commit/logging_handler.py
+@@ -1,3 +1,4 @@
++# -*- coding: utf-8 -*-
+ from __future__ import unicode_literals
+ 
+ import logging
+--- a/pre_commit/main.py
++++ b/pre_commit/main.py
+@@ -1,3 +1,4 @@
++# -*- coding: utf-8 -*-
+ from __future__ import unicode_literals
+ 
+ import argparse
+--- a/pre_commit/make_archives.py
++++ b/pre_commit/make_archives.py
+@@ -1,3 +1,4 @@
++# -*- coding: utf-8 -*-
+ from __future__ import absolute_import
+ from __future__ import print_function
+ from __future__ import unicode_literals
+--- a/pre_commit/manifest.py
++++ b/pre_commit/manifest.py
+@@ -1,3 +1,4 @@
++# -*- coding: utf-8 -*-
+ from __future__ import unicode_literals
+ 
+ import os.path
+--- a/pre_commit/ordereddict.py
++++ b/pre_commit/ordereddict.py
+@@ -1,3 +1,4 @@
++# -*- coding: utf-8 -*-
+ from __future__ import absolute_import
+ from __future__ import unicode_literals
+ 
+--- a/pre_commit/output.py
++++ b/pre_commit/output.py
+@@ -1,3 +1,4 @@
++# -*- coding: utf-8 -*-
+ from __future__ import unicode_literals
+ 
+ import os
+--- a/pre_commit/prefixed_command_runner.py
++++ b/pre_commit/prefixed_command_runner.py
+@@ -1,3 +1,4 @@
++# -*- coding: utf-8 -*-
+ from __future__ import unicode_literals
+ 
+ import os
+--- a/pre_commit/repository.py
++++ b/pre_commit/repository.py
+@@ -1,3 +1,4 @@
++# -*- coding: utf-8 -*-
+ from __future__ import unicode_literals
+ 
+ import io
+--- a/pre_commit/runner.py
++++ b/pre_commit/runner.py
+@@ -1,3 +1,4 @@
++# -*- coding: utf-8 -*-
+ from __future__ import unicode_literals
+ 
+ import os
+--- a/pre_commit/staged_files_only.py
++++ b/pre_commit/staged_files_only.py
+@@ -1,3 +1,4 @@
++# -*- coding: utf-8 -*-
+ from __future__ import unicode_literals
+ 
+ import contextlib
+--- a/pre_commit/store.py
++++ b/pre_commit/store.py
+@@ -1,3 +1,4 @@
++# -*- coding: utf-8 -*-
+ from __future__ import unicode_literals
+ 
+ import contextlib
+--- a/pre_commit/util.py
++++ b/pre_commit/util.py
+@@ -1,3 +1,4 @@
++# -*- coding: utf-8 -*-
+ from __future__ import unicode_literals
+ 
+ import contextlib
+--- a/setup.py
++++ b/setup.py
+@@ -1,3 +1,4 @@
++# -*- coding: utf-8 -*-
+ from setuptools import find_packages
+ from setuptools import setup
+ 
+--- a/testing/auto_namedtuple.py
++++ b/testing/auto_namedtuple.py
+@@ -1,3 +1,4 @@
++# -*- coding: utf-8 -*-
+ from __future__ import unicode_literals
+ 
+ import collections
+--- a/testing/fixtures.py
++++ b/testing/fixtures.py
+@@ -1,3 +1,4 @@
++# -*- coding: utf-8 -*-
+ from __future__ import absolute_import
+ from __future__ import unicode_literals
+ 
+--- a/testing/resources/arbitrary_bytes_repo/setup.py
++++ b/testing/resources/arbitrary_bytes_repo/setup.py
+@@ -1,3 +1,4 @@
++# -*- coding: utf-8 -*-
+ from setuptools import find_packages
+ from setuptools import setup
+ 
+--- a/testing/resources/python3_hooks_repo/python3_hook/main.py
++++ b/testing/resources/python3_hooks_repo/python3_hook/main.py
+@@ -1,3 +1,4 @@
++# -*- coding: utf-8 -*-
+ from __future__ import print_function
+ 
+ import sys
+--- a/testing/resources/python3_hooks_repo/setup.py
++++ b/testing/resources/python3_hooks_repo/setup.py
+@@ -1,3 +1,4 @@
++# -*- coding: utf-8 -*-
+ from setuptools import find_packages
+ from setuptools import setup
+ 
+--- a/testing/resources/python_hooks_repo/foo/main.py
++++ b/testing/resources/python_hooks_repo/foo/main.py
+@@ -1,3 +1,4 @@
++# -*- coding: utf-8 -*-
+ from __future__ import print_function
+ 
+ import sys
+--- a/testing/resources/python_hooks_repo/setup.py
++++ b/testing/resources/python_hooks_repo/setup.py
+@@ -1,3 +1,4 @@
++# -*- coding: utf-8 -*-
+ from setuptools import find_packages
+ from setuptools import setup
+ 
+--- a/testing/util.py
++++ b/testing/util.py
+@@ -1,3 +1,4 @@
++# -*- coding: utf-8 -*-
+ from __future__ import unicode_literals
+ 
+ import os
+--- a/tests/clientlib/validate_base_test.py
++++ b/tests/clientlib/validate_base_test.py
+@@ -1,3 +1,4 @@
++# -*- coding: utf-8 -*-
+ from __future__ import unicode_literals
+ 
+ import pytest
+--- a/tests/clientlib/validate_config_test.py
++++ b/tests/clientlib/validate_config_test.py
+@@ -1,3 +1,4 @@
++# -*- coding: utf-8 -*-
+ from __future__ import unicode_literals
+ 
+ import jsonschema
+--- a/tests/clientlib/validate_manifest_test.py
++++ b/tests/clientlib/validate_manifest_test.py
+@@ -1,3 +1,4 @@
++# -*- coding: utf-8 -*-
+ from __future__ import unicode_literals
+ 
+ import pytest
+--- a/tests/color_test.py
++++ b/tests/color_test.py
+@@ -1,3 +1,4 @@
++# -*- coding: utf-8 -*-
+ from __future__ import unicode_literals
+ 
+ import sys
+--- a/tests/commands/autoupdate_test.py
++++ b/tests/commands/autoupdate_test.py
+@@ -1,3 +1,4 @@
++# -*- coding: utf-8 -*-
+ from __future__ import unicode_literals
+ 
+ import shutil
+--- a/tests/commands/clean_test.py
++++ b/tests/commands/clean_test.py
+@@ -1,3 +1,4 @@
++# -*- coding: utf-8 -*-
+ from __future__ import unicode_literals
+ 
+ import os.path
+--- a/tests/commands/install_uninstall_test.py
++++ b/tests/commands/install_uninstall_test.py
+@@ -1,3 +1,4 @@
++# -*- coding: utf-8 -*-
+ from __future__ import absolute_import
+ from __future__ import unicode_literals
+ 
+--- a/tests/commands/run_test.py
++++ b/tests/commands/run_test.py
+@@ -1,4 +1,4 @@
+-# -*- coding: UTF-8 -*-
++# -*- coding: utf-8 -*-
+ from __future__ import unicode_literals
+ 
+ import functools
+--- a/tests/conftest.py
++++ b/tests/conftest.py
+@@ -1,3 +1,4 @@
++# -*- coding: utf-8 -*-
+ from __future__ import absolute_import
+ from __future__ import unicode_literals
+ 
+--- a/tests/file_classifier/classifier_test.py
++++ b/tests/file_classifier/classifier_test.py
+@@ -1,4 +1,4 @@
+-# encoding: utf-8
++# -*- coding: utf-8 -*-
+ from __future__ import unicode_literals
+ 
+ from contextlib import contextmanager
+--- a/tests/git_test.py
++++ b/tests/git_test.py
+@@ -1,3 +1,4 @@
++# -*- coding: utf-8 -*-
+ from __future__ import absolute_import
+ from __future__ import unicode_literals
+ 
+--- a/tests/jsonschema_extensions_test.py
++++ b/tests/jsonschema_extensions_test.py
+@@ -1,3 +1,4 @@
++# -*- coding: utf-8 -*-
+ from __future__ import unicode_literals
+ 
+ import jsonschema.exceptions
+--- a/tests/languages/all_test.py
++++ b/tests/languages/all_test.py
+@@ -1,3 +1,4 @@
++# -*- coding: utf-8 -*-
+ from __future__ import unicode_literals
+ 
+ import inspect
+--- a/tests/languages/helpers_test.py
++++ b/tests/languages/helpers_test.py
+@@ -1,3 +1,4 @@
++# -*- coding: utf-8 -*-
+ from __future__ import absolute_import
+ from __future__ import unicode_literals
+ 
+--- a/tests/languages/python_test.py
++++ b/tests/languages/python_test.py
+@@ -1,3 +1,4 @@
++# -*- coding: utf-8 -*-
+ from __future__ import absolute_import
+ from __future__ import unicode_literals
+ 
+--- a/tests/languages/ruby_test.py
++++ b/tests/languages/ruby_test.py
+@@ -1,3 +1,4 @@
++# -*- coding: utf-8 -*-
+ from __future__ import unicode_literals
+ 
+ import os.path
+--- a/tests/logging_handler_test.py
++++ b/tests/logging_handler_test.py
+@@ -1,3 +1,4 @@
++# -*- coding: utf-8 -*-
+ from __future__ import unicode_literals
+ 
+ import mock
+--- a/tests/main_test.py
++++ b/tests/main_test.py
+@@ -1,3 +1,4 @@
++# -*- coding: utf-8 -*-
+ from __future__ import absolute_import
+ from __future__ import unicode_literals
+ 
+--- a/tests/make_archives_test.py
++++ b/tests/make_archives_test.py
+@@ -1,3 +1,4 @@
++# -*- coding: utf-8 -*-
+ from __future__ import absolute_import
+ from __future__ import unicode_literals
+ 
+--- a/tests/manifest_test.py
++++ b/tests/manifest_test.py
+@@ -1,3 +1,4 @@
++# -*- coding: utf-8 -*-
+ from __future__ import absolute_import
+ from __future__ import unicode_literals
+ 
+--- a/tests/output_test.py
++++ b/tests/output_test.py
+@@ -1,3 +1,4 @@
++# -*- coding: utf-8 -*-
+ from __future__ import unicode_literals
+ 
+ import mock
+--- a/tests/prefixed_command_runner_test.py
++++ b/tests/prefixed_command_runner_test.py
+@@ -1,3 +1,4 @@
++# -*- coding: utf-8 -*-
+ from __future__ import unicode_literals
+ 
+ import os
+--- a/tests/repository_test.py
++++ b/tests/repository_test.py
+@@ -1,3 +1,4 @@
++# -*- coding: utf-8 -*-
+ from __future__ import absolute_import
+ from __future__ import unicode_literals
+ 
+--- a/tests/runner_test.py
++++ b/tests/runner_test.py
+@@ -1,3 +1,4 @@
++# -*- coding: utf-8 -*-
+ from __future__ import absolute_import
+ from __future__ import unicode_literals
+ 
+--- a/tests/staged_files_only_test.py
++++ b/tests/staged_files_only_test.py
+@@ -1,4 +1,4 @@
+-# -*- coding: UTF-8 -*-
++# -*- coding: utf-8 -*-
+ from __future__ import absolute_import
+ from __future__ import unicode_literals
+ 
+--- a/tests/store_test.py
++++ b/tests/store_test.py
+@@ -1,3 +1,4 @@
++# -*- coding: utf-8 -*-
+ from __future__ import absolute_import
+ from __future__ import unicode_literals
+ 
+--- a/tests/util_test.py
++++ b/tests/util_test.py
+@@ -1,3 +1,4 @@
++# -*- coding: utf-8 -*-
+ from __future__ import unicode_literals
+ 
+ import os
