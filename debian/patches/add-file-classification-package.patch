@@ -3,6 +3,10 @@ Subject: Add file classification package
 Forwarded: not-needed
 
 --- /dev/null
++++ b/pre_commit/file_classifier/__init__.py
+@@ -0,0 +1,1 @@
++
+--- /dev/null
 +++ b/pre_commit/file_classifier/classifier.py
 @@ -0,0 +1,142 @@
 +# encoding: utf-8
@@ -201,6 +205,10 @@ Forwarded: not-needed
  
  logger = logging.getLogger('pre_commit')
  
+--- /dev/null
++++ b/tests/file_classifier/__init__.py
+@@ -0,0 +1,1 @@
++
 --- /dev/null
 +++ b/tests/file_classifier/classifier_test.py
 @@ -0,0 +1,143 @@
